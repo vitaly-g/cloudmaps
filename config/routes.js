@@ -46,8 +46,6 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
-  '/login': {controller: 'UserController', action: 'login'},
-  '/logout': {controller: 'UserController', action: 'logout'},
-  '/send-activate-mail': {controller: 'UserController', action: 'sendActivateMail'}
-
+  '/login': { controller: 'UserController', action: 'login' },
+  '/logout': { controller: 'UserController', action: 'logout' }
 };
