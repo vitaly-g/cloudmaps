@@ -82,7 +82,7 @@ module.exports = {
           if (user && user.password == crypto.createHash('sha256').update(req.param('password')).digest('hex')) {
             if (user.active) {
               req.session.user = user;
-              return res.redirect('/user/profile/' + user.id);
+              return res.redirect('/user/profile?username=' + user.username);
             } else {
               return res.view('user/error', { message: `Ваша учетная запись не активирована`, activateLink: `/user/sendActivateMail?id=${user.id}` });
             }
@@ -95,13 +95,13 @@ module.exports = {
       if (typeof req.session.user == 'undefined') {
         return res.view();
       } else {
-        return res.redirect('/user/profile/' + req.session.user.id);
+        return res.redirect('/user/profile?username=' + req.session.user.username);
       }
     }
   },
 
   profile: function (req, res) {
-    User.findOne(req.param('id')).exec(function (error, user) {
+    User.findOne({ username: req.param('username') }).exec(function (error, user) {
       if (error) {
         res.view('user/error', { message: 'Ошибка: ' + error.message });
       }
