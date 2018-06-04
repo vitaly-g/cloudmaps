@@ -1,0 +1,223 @@
+extends ../layout
+
+block body
+  - var name = [user.firstname, user.lastname].join(' ')
+  nav.navbar.navbar-default
+    .container-fluid
+      .navbar-header
+        span.navbar-brand= name
+      ul.nav.navbar-nav.navbar-right
+        li
+          a(href="/logout") Выход
+  .col-sm-3.text-center
+    img#avatar(src="/user/avatar/"+user.id, alt=name)
+    div.text-center
+      a#select-avatar(href="#") Сменить аватар
+  .col-sm-5
+    .panel.panel-default
+      .panel-heading
+        h1.panel-title Друзья
+      .panel-body
+        h4 Запросы
+        #requests
+        h4 Мои друзья
+        #friends
+      .panel-footer
+        button.btn.btn-default(type="button", data-toggle="modal", data-target="#newFriends") Найти новых друзей
+  .col-sm-4
+    .panel.panel-default
+      .panel-heading
+        h1.panel-title Карта
+      #map.panel-body(style="height: 300px")
+
+  #newFriends.modal.fade(tabindex='-1', role='dialog', aria-labelledby='newFriendsLabel')
+    .modal-dialog(role='document')
+      .modal-content
+        .modal-header
+          button.close(type='button', data-dismiss='modal', aria-label='Close')
+            span(aria-hidden='true') ×
+          h4#newFriendsLabel.modal-title Поиск новых друзей
+        .modal-body
+          | ...
+        .modal-footer
+          button.btn.btn-default(type='button', data-dismiss='modal') Закрыть
+
+block styles
+  link(rel="stylesheet", href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css")
+
+block scripts
+  script(src="/plupload-2.1.8/plupload.full.min.js")
+  script(src="/plupload-2.1.8/i18n/ru.js")
+  script(src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js")
+  script(type="text/javascript").
+    $(function(){
+      var my = JSON.parse('!{JSON.stringify(user)}');
+
+      var map = L.map('map').setView([51.505, -0.09], 13);
+      L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      map.on('locationfound', function(e){
+        map.setView([e.latitude, e.longitude],13);
+        L.marker([e.latitude, e.longitude]).addTo(map);
+      });
+
+      map.on('locationerror', function(e){
+        console.log(e.message);
+      });
+
+      map.locate();
+
+      function get_requests(){
+        $.ajax({
+          url: '/user/requests/'+my.id,
+          method: 'GET'
+        }).done(function(response){
+          $('#requests').html(response);
+
+          $('#requests .accept').on('click', function(e){
+            $.ajax({
+              url: '/user/requests',
+              method: 'PUT',
+              data: {
+                id: $(e.target).data('id')
+              }
+            }).done(function(response){
+              get_requests();
+            });
+          });
+
+          $('#requests .decline').on('click', function(e){
+            $.ajax({
+              url: '/user/requests/'+$(e.target).data('id'),
+              method: 'DELETE',
+            }).done(function(response){
+              get_requests();
+            });
+          });
+
+        });
+      };
+      
+      function get_friends(){
+        $.ajax({
+          url: '/user/friends/'+my.id,
+          method: 'GET'
+        }).done(function(response){
+
+          $('#friends').html(response);
+
+          $('.delete-friend').on('click', function(e){
+            $.ajax({
+              url: '/user/friends/'+$(e.target).data('id'),
+              method: 'DELETE'
+            }).done();
+          });
+
+        });
+      };
+
+      get_requests();
+      get_friends();
+
+      $('#newFriends').on('show.bs.modal', function(e){
+        $.ajax({
+          url: '/user/list',
+          method: 'GET'
+        }).done(function(response){
+          
+          $('#newFriends .modal-body').html(response);
+          
+          $(".request").on('click', function(e){
+            $.ajax({
+              url: '/user/request',
+              method: 'GET',
+              data: {
+                id_requested: $(e.target).data('id')
+              },
+              success: function(response){
+                if(response.success){
+                  $(e.target).replaceWith('<span>'+response.message+'</span>');
+                }
+                else{
+                  alert("Ошибка: "+ response.error.message);
+                }
+              }
+            });
+          });
+
+        });
+      });
+
+      var uploader = new plupload.Uploader({
+          browse_button: 'select-avatar',
+          url: '/user/avatar',
+          multi_selection: false,
+          filters: {
+            mime_types : [
+                { title : "Image files", extensions : "jpg, jpeg" },
+            ],
+            max_file_size: "2000kb",
+          },
+          resize:{
+            width: 200,
+            height: 200
+          }
+      });
+
+      uploader.init();
+
+      uploader.bind('FilesAdded', function(up, files){
+        if(files.length){
+          uploader.start();
+        }
+      });
+
+      uploader.bind('FileUploaded', function(up, file, result){
+        if(result.status == 200){
+          var src = $('#avatar').attr('src').split('?',1)[0]+ '?_'+ new Date().getTime();
+          $('#avatar').attr('src', src);
+        }
+        else{
+          alert(result.response);
+        }
+      });
+      
+      io.socket.get('/user/subscribe', function(resData, jwres){
+        return;
+      });
+
+      io.socket.on('request', function (event){
+        switch (event.verb) {
+          case 'created':
+            var request = event.data;
+            var user = request.id_requesting;
+            if(my.id == request.id_requested.id){
+              get_requests();
+            }
+            break;
+          default:
+            console.warn('Unrecognized socket event (`%s`) from server:',event.verb, event);
+        }
+      });
+
+      io.socket.on('friend', function (event){
+        switch (event.verb) {
+          case 'created':
+            if(my.id == event.data.id_user || my.id == event.data.id_friend){
+              get_friends();
+            }
+            break;
+          default:
+            console.warn('Unrecognized socket event (`%s`) from server:',event.verb, event);
+        }
+      });
+
+      io.socket.on('delete_friend', function(data){
+        if(my.id == data.id_user || my.id == data.id_friend){
+          get_friends();
+        }
+      });
+
+    });

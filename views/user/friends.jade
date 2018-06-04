@@ -1,0 +1,12 @@
+if friends.length
+  table.table.table-striped
+    each friend in friends
+      -var name = [friend.firstname, friend.lastname].join(' ')
+      tr
+        td
+          img(src="/user/avatar/" + friend.id, width="60", height="60" alt=name)
+        td.vmiddle= name
+        td.vmiddle
+          a.delete-friend(href="#", data-id=friend.id) Удалить
+else
+  span У Вас пока нет друзей

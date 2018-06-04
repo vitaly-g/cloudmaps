@@ -1,0 +1,9 @@
+table.table.table-striped
+  each user in list
+    - var name = [user.firstname, user.lastname].join(' ')
+    tr
+      td
+        img(src="/user/avatar/"+ user.id, width="60", height="60", alt=name)
+      td.vmiddle= name
+      td.vmiddle
+        a.request(href="#", data-id=user.id) Добавить в друзья

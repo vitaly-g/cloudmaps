@@ -1,0 +1,25 @@
+extends ../layout
+
+block body
+  .row
+    .col-sm-3
+    .col-sm-6
+      .panel.panel-default
+        .panel-heading
+          h1.panel-title Введите логин и пароль
+        .panel-body
+          form.form-horizontal(action="", method="POST")
+            .form-group
+              label.col-sm-2(for="login") Логин
+              .col-sm-10
+                input#login.form-control(type="text", name="username", required)
+            .form-group
+              label.col-sm-2(for="password") Пароль
+              .col-sm-10
+                input#password.form-control(type="password", name="password", required)
+            .form-group
+              .col-sm-12
+                input.form-control(type="submit", value="Войти")
+          p.text-center
+            a(href="/user/register") Регистрация нового пользователя
+    .col-sm-3

@@ -1,0 +1,31 @@
+extends ../layout
+
+block body
+  nav.navbar.navbar-default
+    .container-fluid
+      .navbar-header
+        span.navbar-brand Регистрация
+
+  form.form-horizontal(action="", method="POST")
+    .form-group
+      label.col-sm-3(for="username") Логин
+      .col-sm-9
+        input#username.form-control(type="text", name="username", placeholder="Логин", required)
+    .form-group
+      label.col-sm-3(for="pasword") Пароль
+      .col-sm-9
+        input#password.form-control(type="password", name="password", placeholder="Пароль", required)
+    .form-group
+      label.col-sm-3(for="firstname") Имя
+      .col-sm-9
+        input#firstname.form-control(type="text", name="firstname", placeholder="Имя", required)
+    .form-group
+      label.col-sm-3(for="lastname") Фамилия
+      .col-sm-9
+        input#lastname.form-control(type="text", name="lastname", placeholder="Фамилия")
+    .form-group
+      label.col-sm-3(for="email") Электронная почта
+      .col-sm-9
+        input#email.form-control(type="email", name="email", placeholder="Электронная почта", required)
+    .form-group
+      input(type="submit", value="Зарегистрироваться")
